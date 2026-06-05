@@ -130,6 +130,12 @@ input[type=date]{color-scheme:dark}
       <label for="select-all-cb" style="font-size:12px;color:#888;cursor:pointer;white-space:nowrap">Όλες</label>
     </div>
     <input class="search-inp" id="search-inp" type="text" placeholder="🔍 Αναζήτηση ασθενή, νοσηλεία..." oninput="render()"/>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <input type="date" id="filter-from" class="inp" style="width:135px;padding:5px 8px;font-size:12px;color:#fff" title="Από" onchange="render()"/>
+      <span style="color:#555;font-size:12px">–</span>
+      <input type="date" id="filter-to" class="inp" style="width:135px;padding:5px 8px;font-size:12px;color:#fff" title="Έως" onchange="render()"/>
+      <button onclick="document.getElementById('filter-from').value='';document.getElementById('filter-to').value='';render();" style="background:transparent;border:1px solid #333;border-radius:6px;padding:5px 8px;color:#666;cursor:pointer;font-size:12px" title="Καθαρισμός φίλτρου">✕</button>
+    </div>
     <div class="sort-row">
       <button class="sort-btn active" id="sort-date">📅 Ημερομηνία</button>
       <button class="sort-btn" id="sort-az">🔤 Α-Ω</button>
@@ -234,6 +240,10 @@ function getFiltered(){
   let recs=getRecords();
   const q=(document.getElementById('search-inp')||{}).value||'';
   if(q.trim()) recs=recs.filter(r=>(r.patient||'').toLowerCase().includes(q.toLowerCase())||(r.nosileia||'').toLowerCase().includes(q.toLowerCase())||(r.therapy||'').toLowerCase().includes(q.toLowerCase())||(r.valve||'').toLowerCase().includes(q.toLowerCase()));
+  const from=(document.getElementById('filter-from')||{}).value||'';
+  const to=(document.getElementById('filter-to')||{}).value||'';
+  if(from) recs=recs.filter(r=>r.date&&r.date>=from);
+  if(to) recs=recs.filter(r=>r.date&&r.date<=to);
   if(state.sort==='date') recs=[...recs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   else if(state.sort==='date_asc') recs=[...recs].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   else recs=[...recs].sort((a,b)=>(a.patient||'').localeCompare(b.patient||''));
@@ -520,6 +530,26 @@ function renderRecords(){
       delete state.selected[rec.id];if(state.editingId===rec.id)state.editingId=null;
       save();render();
     };
+    if(state.viewDone){
+      const restoreBtn=document.createElement('button');
+      restoreBtn.className='icon-btn';restoreBtn.title='Επαναφορά στις ενεργές';
+      restoreBtn.textContent='↩️';
+      restoreBtn.style.cssText='background:#1a2a3a;border-color:#1e4d7a;color:#4a9eff';
+      restoreBtn.onclick=()=>{
+        const doneKey=state.cat+'_done';
+        const activeKey=state.cat;
+        const all=state[doneKey];
+        const i=all.findIndex(r=>r.id===rec.id);
+        if(i>-1){
+          const restored=all.splice(i,1)[0];
+          delete restored.completedAt;
+          if(!state[activeKey]) state[activeKey]=[];
+          state[activeKey].unshift(restored);
+        }
+        save();render();
+      };
+      actions.appendChild(restoreBtn);
+    }
     actions.appendChild(editBtn);actions.appendChild(delBtn);
     top.appendChild(cb);top.appendChild(main);top.appendChild(actions);
     item.appendChild(top);
