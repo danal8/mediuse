@@ -9,7 +9,7 @@
 body{background:#0d0d0d;color:#fff;font-family:Arial,sans-serif;min-height:100vh}
 #app{max-width:1200px;margin:0 auto;padding:1.5rem}
 h1{font-size:24px;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;align-items:center;gap:0}
-.subtitle{font-size:13px;color:#555;margin-bottom:1.5rem}
+.subtitle{font-size:13px;color:#888;margin-bottom:1.5rem}
 .sync-bar{display:flex;align-items:center;gap:10px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:8px 14px;margin-bottom:1.25rem;font-size:12px;color:#888}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0}
 .sync-dot.ok{background:#4ade80}
@@ -26,10 +26,10 @@ h1{font-size:24px;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;al
 .cat-tab:hover:not(.active){border-color:#555;color:#ccc}
 
 .add-panel{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:16px;margin-bottom:1.25rem}
-.add-panel h3{font-size:12px;color:#555;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.add-panel h3{font-size:12px;color:#aaa;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:12px}
 .form-group{display:flex;flex-direction:column;gap:4px}
-.form-group label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.3px}
+.form-group label{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.3px}
 .inp{background:#111;border:1px solid #333;border-radius:8px;padding:8px 12px;color:#fff;font-size:14px;outline:none;width:100%}
 .inp:focus{border-color:#555}
 .inp::placeholder{color:#555}
@@ -114,6 +114,16 @@ h1{font-size:24px;font-weight:700;color:#fff;margin-bottom:.5rem;display:flex;al
 
 input[type=date]{color-scheme:dark}
 @media(max-width:600px){.form-grid{grid-template-columns:1fr 1fr}.toolbar{flex-direction:column}}
+
+.done-dropdown{position:relative;display:inline-block}
+.done-dropdown-btn{padding:7px 16px;border-radius:8px;border:1px solid #333;background:transparent;color:#888;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s}
+.done-dropdown-btn.active{background:#2a1a0a;border-color:#7a4a1a;color:#f97316}
+.done-dropdown-btn:hover{border-color:#555;color:#ccc}
+.done-dropdown-menu{position:absolute;top:110%;left:0;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:4px;z-index:100;min-width:160px;display:none;flex-direction:column;gap:2px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.done-dropdown-menu.open{display:flex}
+.done-menu-item{padding:8px 12px;border-radius:6px;border:none;background:transparent;color:#888;cursor:pointer;font-size:13px;text-align:left;transition:all .15s}
+.done-menu-item:hover{background:#2a2a2a;color:#fff}
+.done-menu-item.active{background:#2a1a0a;color:#f97316}
 </style>
 </head>
 <body>
@@ -121,7 +131,7 @@ input[type=date]{color-scheme:dark}
   <h1><span style="color:#1a3a8f;font-weight:800;letter-spacing:-1px">Medi</span><span style="color:#cc1a1a;font-weight:800;letter-spacing:-1px">Use</span></h1>
   <p class="subtitle">Καταγραφή Ιατρικών Επεμβάσεων — Mediterraneo Hospital</p>
   <div class="sync-bar"><div class="sync-dot loading" id="sync-dot"></div><span id="sync-label">Σύνδεση...</span></div>
-  <div class="cat-tabs" id="cat-tabs"></div>
+  <div class="cat-tabs" id="cat-tabs" style="position:relative"></div>
   <div id="add-section"></div>
   <div class="alert-bar" id="alert-bar"></div>
   <div class="toolbar">
@@ -276,23 +286,41 @@ function markSelectedDone(){
 
 function renderCatTabs(){
   const el=document.getElementById('cat-tabs');el.innerHTML='';
-  const tabs=[
+  const mainTabs=[
     {cat:'tavi',done:false,label:'🫀 TAVI'},
     {cat:'boston',done:false,label:'⚡ Boston ΗΦΕ'},
     {cat:'evar',done:false,label:'🩸 EVAR'},
-    {cat:'tavi',done:true,label:'✅ TAVI Ολοκλ.'},
-    {cat:'boston',done:true,label:'✅ Boston Ολοκλ.'},
-    {cat:'evar',done:true,label:'✅ EVAR Ολοκλ.'},
   ];
-  tabs.forEach(t=>{
+  mainTabs.forEach(t=>{
     const b=document.createElement('button');
-    const active=state.cat===t.cat&&state.viewDone===t.done;
-    const cls=t.done?'done':t.cat;
-    b.className='cat-tab '+cls+(active?' active':'');
+    const active=state.cat===t.cat&&!state.viewDone;
+    b.className='cat-tab '+t.cat+(active?' active':'');
     b.textContent=t.label;
-    b.onclick=()=>{state.cat=t.cat;state.viewDone=t.done;state.editingId=null;state.selected={};document.getElementById('search-inp').value='';render();};
+    b.onclick=()=>{state.cat=t.cat;state.viewDone=false;state.editingId=null;state.selected={};document.getElementById('search-inp').value='';render();};
     el.appendChild(b);
   });
+
+  // Dropdown for done tabs
+  const doneTabs=[
+    {cat:'tavi',label:'🫀 TAVI Ολοκλ.'},
+    {cat:'boston',label:'⚡ Boston Ολοκλ.'},
+    {cat:'evar',label:'🩸 EVAR Ολοκλ.'},
+  ];
+  const wrap=document.createElement('div');wrap.className='done-dropdown';
+  const btn=document.createElement('button');
+  btn.className='done-dropdown-btn'+(state.viewDone?' active':'');
+  btn.textContent='✅ Ολοκληρωμένα ▾';
+  const menu=document.createElement('div');menu.className='done-dropdown-menu';
+  doneTabs.forEach(t=>{
+    const item=document.createElement('button');item.className='done-menu-item'+(state.viewDone&&state.cat===t.cat?' active':'');
+    item.textContent=t.label;
+    item.onclick=(e)=>{e.stopPropagation();state.cat=t.cat;state.viewDone=true;state.editingId=null;state.selected={};document.getElementById('search-inp').value='';menu.classList.remove('open');render();};
+    menu.appendChild(item);
+  });
+  btn.onclick=(e)=>{e.stopPropagation();menu.classList.toggle('open');};
+  document.addEventListener('click',()=>menu.classList.remove('open'),{once:false});
+  wrap.appendChild(btn);wrap.appendChild(menu);
+  el.appendChild(wrap);
 }
 
 function renderAddSection(){
