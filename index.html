@@ -367,9 +367,10 @@ function renderAlertBar(){
 }
 
 function renderStats(){
-  const recs=getRecords();const sel=getSelected();
+  const recs=getFiltered();const sel=getSelected();
   const el=document.getElementById('stats');
-  let html=`<div class="stat">Σύνολο: <span>${recs.length}</span></div>`;
+  html_total=recs.length!==getRecords().length?`<div class="stat">Σύνολο: <span>${recs.length}</span> <span style="color:#555">(από ${getRecords().length})</span></div>`:`<div class="stat">Σύνολο: <span>${recs.length}</span></div>`;
+  let html=html_total;
   const cat=CATS[state.cat];
   if(cat.hasAmount){
     const useRecs=sel.length>0?recs.filter(r=>state.selected[r.id]):recs;
