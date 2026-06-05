@@ -229,6 +229,7 @@ function getFiltered(){
   const q=(document.getElementById('search-inp')||{}).value||'';
   if(q.trim()) recs=recs.filter(r=>(r.patient||'').toLowerCase().includes(q.toLowerCase())||(r.nosileia||'').toLowerCase().includes(q.toLowerCase())||(r.therapy||'').toLowerCase().includes(q.toLowerCase())||(r.valve||'').toLowerCase().includes(q.toLowerCase()));
   if(state.sort==='date') recs=[...recs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  else if(state.sort==='date_asc') recs=[...recs].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   else recs=[...recs].sort((a,b)=>(a.patient||'').localeCompare(b.patient||''));
   return recs;
 }
@@ -377,10 +378,19 @@ function renderBulkBar(){
 }
 
 function renderSort(){
-  document.getElementById('sort-date').classList.toggle('active',state.sort==='date');
-  document.getElementById('sort-az').classList.toggle('active',state.sort==='az');
-  document.getElementById('sort-date').onclick=()=>{state.sort='date';render();};
-  document.getElementById('sort-az').onclick=()=>{state.sort='az';render();};
+  const sd=document.getElementById('sort-date');
+  const sa=document.getElementById('sort-az');
+  sd.classList.toggle('active',state.sort==='date'||state.sort==='date_asc');
+  sa.classList.toggle('active',state.sort==='az');
+  const arr=(state.sort==='date'||state.sort==='date_asc')?(state.sort==='date'?' ↓':' ↑'):'';
+  sd.textContent='📅 Ημερομηνία'+arr;
+  sa.textContent='🔤 Α-Ω';
+  sd.onclick=()=>{
+    if(state.sort==='date') state.sort='date_asc';
+    else state.sort='date';
+    render();
+  };
+  sa.onclick=()=>{state.sort='az';render();};
 }
 
 function makeEditPanel(rec){
