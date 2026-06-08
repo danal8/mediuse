@@ -526,6 +526,7 @@ function renderRecords(){
       if(rec.inout){const t=document.createElement('span');t.className='tag '+(rec.inout==='ΕΝΤΟΣ'?'green':'yellow');t.textContent=rec.inout;tags.appendChild(t);}
       if(rec.therapy){const t=document.createElement('span');t.className='tag purple';t.textContent='⚡ '+rec.therapy;tags.appendChild(t);}
       if(rec.amount){const t=document.createElement('span');t.className='tag blue';t.textContent='💶 '+parseFloat(rec.amount).toLocaleString('el-GR',{minimumFractionDigits:2})+'€';tags.appendChild(t);}
+      if(rec.credit&&parseFloat(rec.credit)>0){const t=document.createElement('span');t.className='tag orange';t.textContent='🔄 '+parseFloat(rec.credit).toLocaleString('el-GR',{minimumFractionDigits:2})+'€';tags.appendChild(t);}
 
       // Credit due date
       if(rec.date&&!state.viewDone){
