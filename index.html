@@ -764,42 +764,67 @@ function renderPlResults(data){
 
     // Bundle για Boston pacemaker/icd αρχική εμφύτευση
     // ΚΑΙ για Medtronic ablation (3 κύρια πακέτα)
+    // ΚΑΙ για Boston ablation πακέτα (ΗΦΕ, His, Rhythmia A/B, Farapulse)
     const MEDTRONIC_ABLATION_BUNDLES=['PSCC100','AFAPRO28','AFR-00001'];
     const MEDTRONIC_ABLATION_NAMES={
       'PSCC100':'Καθετήρας ηλεκτροδιάτρησης μεμβράνης (PFA)',
       'AFAPRO28':'Καθετήρας κρυοκατάλυσης',
       'AFR-00001':'Καθετήρας χαρτογράφησης και κατάλυσης AFFERA'
     };
+    const BOSTON_ABLATION_BUNDLES=['M0044000040','M004EPM96200','M004EPTR5031TH0','M004RC64S0','41M401'];
+    const BOSTON_ABLATION_NAMES={
+      'M0044000040':'Πακέτο ΗΦΕ',
+      'M004EPM96200':'Πακέτο Κατάλυσης Κολποκοιλιακού Κόμβου (His ablation)',
+      'M004EPTR5031TH0':'Χρέωση Υλικών Rhythmia — Πακέτο Α',
+      'M004RC64S0':'Χρέωση Υλικών Rhythmia — Πακέτο Β',
+      '41M401':'Υλικά Farapulse — Pulsed Field Ablation'
+    };
     const isMedtronicAblationBundle=item.supplier==='Medtronic' && item.category==='ablation' && MEDTRONIC_ABLATION_BUNDLES.includes(item.ref_code);
-    const showBundle=(item.supplier==='Boston' && (item.category==='pacemaker'||item.category==='icd') && plState.implantType==='initial') || isMedtronicAblationBundle;
+    const isBostonAblationBundle=item.supplier==='Boston' && item.category==='ablation' && BOSTON_ABLATION_BUNDLES.includes(item.ref_code);
+    const showBundle=(item.supplier==='Boston' && (item.category==='pacemaker'||item.category==='icd') && plState.implantType==='initial') || isMedtronicAblationBundle || isBostonAblationBundle;
     if(showBundle){
       const bundleWrap=document.createElement('div');
       div.appendChild(bundleWrap);
       plFetchBundles(item.id).then(bundles=>{
         if(!bundles.length) return;
         const bDiv=document.createElement('div');bDiv.className='pl-bundle';
-        const bundleName=isMedtronicAblationBundle
-          ? '📦 Σετ — '+MEDTRONIC_ABLATION_NAMES[item.ref_code]
-          : '📦 Πακέτο Αρχικής Εμφύτευσης';
+
+        let bundleName='📦 Πακέτο Αρχικής Εμφύτευσης';
+        if(isMedtronicAblationBundle) bundleName='📦 Σετ — '+MEDTRONIC_ABLATION_NAMES[item.ref_code];
+        else if(isBostonAblationBundle) bundleName='📦 '+BOSTON_ABLATION_NAMES[item.ref_code];
+
         const btitle=document.createElement('div');btitle.className='pl-bundle-title';btitle.textContent=bundleName;
         bDiv.appendChild(btitle);
+
+        // Κύρια γραμμή (μπλε) — το ίδιο το κύριο υλικό
+        const mainRow=document.createElement('div');
+        mainRow.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:6px 8px;margin-bottom:4px;background:#1a2a3a;border:1px solid #2a4a6a;border-radius:6px;gap:8px;font-size:12px';
+        const mainCode=document.createElement('span');mainCode.style.cssText='color:#60a5fa;font-family:monospace;font-size:11px;flex-shrink:0';mainCode.textContent=item.ref_code;
+        const mainDesc=document.createElement('span');mainDesc.style.cssText='color:#bfdbfe;flex:1;font-weight:600';mainDesc.textContent=item.description;
+        const mainPrice=document.createElement('span');mainPrice.style.cssText='color:#60a5fa;font-weight:700;flex-shrink:0';mainPrice.textContent=fmtPrice(item.price_purchase)||'—';
+        mainRow.appendChild(mainCode);mainRow.appendChild(mainDesc);mainRow.appendChild(mainPrice);
+        bDiv.appendChild(mainRow);
+
         let total=parseFloat(item.price_purchase)||0;
         bundles.forEach(b=>{
-          const row=document.createElement('div');row.className='pl-bundle-row';
-          const code=document.createElement('span');code.className='pl-bundle-code';code.textContent=b.ref_code||'';
-          const bdesc=document.createElement('span');bdesc.className='pl-bundle-desc';bdesc.textContent=b.description||'';
-          const qty=document.createElement('span');qty.className='pl-bundle-qty';qty.textContent='x'+b.quantity;
-          const bprice=document.createElement('span');
+          const row=document.createElement('div');
+          row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#1a2e1a;border:1px solid #2a4a2a;border-radius:6px;margin-bottom:3px;gap:8px;font-size:12px';
+          const code=document.createElement('span');code.style.cssText='color:#4ade80;font-family:monospace;font-size:11px;flex-shrink:0';code.textContent=b.ref_code||'';
+          const bdesc=document.createElement('span');bdesc.style.cssText='color:#bbf7d0;flex:1';bdesc.textContent=b.description||'';
+          const qty=document.createElement('span');qty.style.cssText='color:#6ee7b7;flex-shrink:0;margin:0 6px';qty.textContent='x'+b.quantity;
+          const priceWrap=document.createElement('span');priceWrap.style.cssText='flex-shrink:0;text-align:right';
           if(b.is_free){
-            bprice.className='pl-bundle-price free';bprice.textContent='ΔΩΡΕΑΝ';
+            priceWrap.style.color='#4ade80';priceWrap.style.fontWeight='700';priceWrap.textContent='ΔΩΡΕΑΝ';
           } else {
             const lineTotal=(parseFloat(b.unit_price)||0)*b.quantity;
             total+=lineTotal;
-            bprice.className='pl-bundle-price normal';bprice.textContent=fmtPrice(lineTotal);
+            // Αρχική τιμή | Τιμή πακέτου (εδώ ίδια — FOC αλλιώς)
+            priceWrap.innerHTML='<span style="color:#fcd34d;font-weight:700">'+fmtPrice(lineTotal)+'</span>';
           }
-          row.appendChild(code);row.appendChild(bdesc);row.appendChild(qty);row.appendChild(bprice);
+          row.appendChild(code);row.appendChild(bdesc);row.appendChild(qty);row.appendChild(priceWrap);
           bDiv.appendChild(row);
         });
+
         const totalRow=document.createElement('div');totalRow.className='pl-bundle-total';
         totalRow.innerHTML='<span style="font-size:12px;color:#7ab8b8;margin-right:8px">Σύνολο πακέτου:</span><span class="pl-bundle-total-val">'+fmtPrice(total)+'</span>';
         bDiv.appendChild(totalRow);
