@@ -268,7 +268,7 @@ const CATS={
     {id:'date',label:'Ημερομηνία',type:'date',required:true},
     {id:'nosileia',label:'Νοσηλεία',type:'text',placeholder:'Ν000000'},
     {id:'patient',label:'Ασθενής',type:'text',required:true},
-    {id:'inout',label:'Εντός/Εκτός',type:'select',options:['ΕΝΤΟΣ','ΕΚΤΟΣ']},
+    {id:'inout',label:'Πακέτο/Ασφάλεια',type:'select',options:['Πακέτο','Ασφάλεια']},
     {id:'therapy',label:'Θεραπεία',type:'text',placeholder:'π.χ. PFA, Ablation'},
     {id:'amount',label:'Καθαρό Ποσό (€)',type:'number',placeholder:'0.00'},
     {id:'credit',label:'Πιστωτικό 30% (€)',type:'number',placeholder:'Αυτόματος υπολογισμός',readonly:true},
@@ -569,7 +569,7 @@ function renderRecords(){
 
     }
     if(state.cat==='boston'){
-      if(rec.inout){const t=document.createElement('span');t.className='tag '+(rec.inout==='ΕΝΤΟΣ'?'green':'yellow');t.textContent=rec.inout;tags.appendChild(t);}
+      if(rec.inout){const t=document.createElement('span');t.className='tag '+(rec.inout==='Πακέτο'?'green':'yellow');t.textContent=rec.inout;tags.appendChild(t);}
       if(rec.therapy){const t=document.createElement('span');t.className='tag purple';t.textContent='⚡ '+rec.therapy;tags.appendChild(t);}
       if(rec.amount){const t=document.createElement('span');t.className='tag blue';t.textContent='💶 '+parseFloat(rec.amount).toLocaleString('el-GR',{minimumFractionDigits:2})+'€';tags.appendChild(t);}
       if(rec.credit&&parseFloat(rec.credit)>0){const t=document.createElement('span');t.className='tag orange';t.textContent='🔄 '+parseFloat(rec.credit).toLocaleString('el-GR',{minimumFractionDigits:2})+'€';tags.appendChild(t);}
@@ -895,7 +895,7 @@ function renderPricelist(){
 
   // Bundle mode toggle
   const bundleRow=document.createElement('div');bundleRow.className='pl-implant-toggle';bundleRow.style.marginTop='6px';
-  [{v:'out',l:'Εκτός Πακέτου'},{v:'in',l:'Εντός Πακέτου'}].forEach(t=>{
+  [{v:'out',l:'Ασφάλεια'},{v:'in',l:'Πακέτο'}].forEach(t=>{
     const b=document.createElement('button');
     b.className='pl-implant-btn'+(plState.bundleMode===t.v?' active':'');
     b.style.background=plState.bundleMode===t.v?(t.v==='in'?'#1a3a5f':'#1a2828'):'';
@@ -907,7 +907,7 @@ function renderPricelist(){
   });
   wrap.appendChild(bundleRow);
 
-  const hint=document.createElement('div');hint.className='pl-hint';hint.style.color='#b2dfdb';hint.textContent='Αρχική Εμφύτευση/Αντικατάσταση αφορά βηματοδότες & απινιδωτές. Εκτός/Εντός Πακέτου αφορά μόνο τα bundles ablation Boston.';
+  const hint=document.createElement('div');hint.className='pl-hint';hint.style.color='#b2dfdb';hint.textContent='Αρχική Εμφύτευση/Αντικατάσταση αφορά βηματοδότες & απινιδωτές. Ασφάλεια/Πακέτο αφορά μόνο τα bundles ablation Boston.';
   wrap.appendChild(hint);
 
   // Search row
